@@ -1,9 +1,10 @@
-import { Text, View, TouchableOpacity } from 'react-native'
+import { Text, View } from 'react-native'
 import React from 'react'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { colors } from '../../constants/theme'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useRouter } from 'expo-router'
+import Button from '../../components/Button'
 
 const Welcome = () => {
   const router = useRouter()
@@ -28,14 +29,10 @@ const Welcome = () => {
           <Text className='text-4xl font-bold  ' style={{ color: colors.white }}>with your friends & family</Text>
         </View>
 
-        <TouchableOpacity className='w-[80%] rounded-full p-3 py-4 '
-          style={{
-            backgroundColor: colors.primary,
-          }}
-          onPress={() => router.push('/register')}
-        >
-          <Text className='text-center text-lg font-bold' style={{ color: colors.neutral900 }}>Get Started</Text>
-        </TouchableOpacity>
+        <Button 
+          title="Get Started" 
+          onPress={() => router.push('/register')} 
+        />
 
       </View>
     </ScreenWrapper>

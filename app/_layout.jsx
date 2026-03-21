@@ -4,11 +4,7 @@ import '../global.css';
 import { Stack } from 'expo-router'
 
 const _layout = () => {
-  return (
-    <Stack>
-      <Stack screenOptions={{headerShown:false}} />
-    </Stack>
-  )
+  return <Stack screenOptions={{headerShown:false}} />
 }
 
 export default _layout

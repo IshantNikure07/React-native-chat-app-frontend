@@ -22,9 +22,9 @@ const DirectMessages = () => {
                 <Text className="text-3xl font-bold text-white">Chats</Text>
                 <View className="flex-row gap-3 items-center">
                     <Ionicons name="search" size={24} color={colors.white} />
-                    <TouchableOpacity className="p-2 rounded-full justify-center items-center" style={{ backgroundColor: colors.primary }}>
+                    {/* <TouchableOpacity className="p-2 rounded-full justify-center items-center" style={{ backgroundColor: colors.primary }}>
                         <Ionicons name="add" size={24} color={colors.neutral900} />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
             </View>
             
@@ -45,6 +45,10 @@ const DirectMessages = () => {
                     contentContainerStyle={{ paddingVertical: 10 }}
                     showsVerticalScrollIndicator={false}
                 />
+
+                <TouchableOpacity className="rounded-full absolute bottom-5 right-5 items-center justify-center w-10 h-10" style={{ backgroundColor: colors.primary }}>
+                    <Ionicons name="add" size={24} color={colors.neutral900} />
+                </TouchableOpacity>
             </View>
         </ScreenWrapper>
     );

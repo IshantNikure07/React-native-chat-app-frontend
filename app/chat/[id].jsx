@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Image, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Image, Alert, ActivityIndicator, Keyboard } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/theme';
@@ -13,12 +13,38 @@ import { apiFetch } from '../../utils/api';
 //     { id: '3', text: 'I am doing great, just checking out this new app layout. It looks awesome!', sender: 'other', time: '10:08 AM' },
 // ];
 
+const POPULAR_EMOJIS = [
+    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
+    '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
+    '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🥸',
+    '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️',
+    '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡',
+    '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓',
+    '🤗', '🤔', '🫣', '🤭', '🫢', '🫡', '🤫', '🫠', '👍', '👎',
+    '👊', '✊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🙏', '💪',
+    '✌️', '🤞', '🤙', '👋', '❤️', '🔥', '✨', '🎉', '💯', '💬'
+];
+
 const ChatInterface = () => {
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
+    const [sender, setSender] = useState([]);
+    const [onlineUsers, setOnlineUsers] = useState([]);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const isGroup = id.startsWith('g');
+
+    const toggleEmojiPicker = () => {
+        if (!showEmojiPicker) {
+            Keyboard.dismiss();
+        }
+        setShowEmojiPicker(!showEmojiPicker);
+    };
+
+    const handleEmojiSelect = (emoji) => {
+        setMessage(prev => prev + emoji);
+    };
 
     useEffect(() => {
         async function fetchMessages() {
@@ -28,6 +54,7 @@ const ChatInterface = () => {
 
                 if (data.success && data.messages) {
                     setMessages(data.messages);
+                    setSender(data?.sender);
                 }
             } catch (error) {
                 console.error('Error fetching messages:', error);
@@ -43,6 +70,9 @@ const ChatInterface = () => {
         const socket = getSocket();
 
         if (socket) {
+            // Request the initial list of online users
+            socket.emit("requestOnlineUsers");
+
             // Listen for incoming messages dynamically from backend
             socket.on("newMessage", (data) => {
                 // Determine if this is a message we should append
@@ -56,6 +86,11 @@ const ChatInterface = () => {
                 };
                 setMessages(prev => [...prev, newIncoming]);
             });
+
+            // Listen for online users list
+            socket.on("getOnlineUsers", (users) => {
+                setOnlineUsers(users);
+            });
             
             socket.on("messageError", (errorData) => {
                 console.error("Socket Error:", errorData);
@@ -65,6 +100,7 @@ const ChatInterface = () => {
         return () => {
             if (socket) {
                 socket.off("newMessage");
+                socket.off("getOnlineUsers");
                 socket.off("messageError");
             }
         };
@@ -120,13 +156,18 @@ const ChatInterface = () => {
                     </TouchableOpacity>
                     
                     <Image 
-                        source={{ uri: isGroup ? 'https://i.pravatar.cc/150?img=21' : 'https://i.pravatar.cc/150?img=11' }} 
+                        source={{ uri: isGroup ? 'https://i.pravatar.cc/150?img=21' :  (sender?.avatar ? process.env.EXPO_PUBLIC_BACKEND_URL+sender?.avatar : 'https://i.pravatar.cc/150?img=11') }} 
                         className="w-10 h-10 rounded-full mr-3"
                     />
                     
                     <View className="flex-1">
-                        <Text className="text-lg font-bold text-white">{isGroup ? 'Group Chat' : 'Chat'}</Text>
-                        <Text className="text-xs text-neutral-300">Online</Text>
+                        <Text className="text-lg font-bold text-white">{isGroup ? 'Group Chat' : (sender?.username ? sender?.username : 'Chat')}</Text>
+                        <Text 
+                            className="text-xs font-semibold"
+                            style={{ color: isGroup ? colors.neutral300 : (onlineUsers.includes(Number(id)) ? colors.green : colors.neutral400) }}
+                        >
+                            {isGroup ? 'Group Chat' : (onlineUsers.includes(Number(id)) ? 'Online' : 'Offline')}
+                        </Text>
                     </View>
                     
                     <TouchableOpacity className="ml-2">
@@ -175,10 +216,15 @@ const ChatInterface = () => {
                                 placeholderTextColor={colors.neutral500}
                                 value={message}
                                 onChangeText={setMessage}
+                                onFocus={() => setShowEmojiPicker(false)}
                                 multiline
                             />
-                            <TouchableOpacity>
-                                <Ionicons name="happy-outline" size={24} color={colors.neutral500} />
+                            <TouchableOpacity onPress={toggleEmojiPicker}>
+                                <Ionicons 
+                                    name={showEmojiPicker ? "keyboard-outline" : "happy-outline"} 
+                                    size={24} 
+                                    color={colors.neutral500} 
+                                />
                             </TouchableOpacity>
                         </View>
                         
@@ -196,6 +242,27 @@ const ChatInterface = () => {
                             />
                         </TouchableOpacity>
                     </View>
+
+                    {/* Emoji Picker Grid */}
+                    {showEmojiPicker && (
+                        <View className="h-60 bg-white border-t border-neutral-100 p-4">
+                            <FlatList
+                                data={POPULAR_EMOJIS}
+                                keyExtractor={(item) => item}
+                                numColumns={8}
+                                columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 12 }}
+                                showsVerticalScrollIndicator={false}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity 
+                                        className="w-10 h-10 items-center justify-center rounded-lg active:bg-neutral-100"
+                                        onPress={() => handleEmojiSelect(item)}
+                                    >
+                                        <Text className="text-2xl">{item}</Text>
+                                    </TouchableOpacity>
+                                )}
+                            />
+                        </View>
+                    )}
                 </View>
             </ScreenWrapper>
         </KeyboardAvoidingView>

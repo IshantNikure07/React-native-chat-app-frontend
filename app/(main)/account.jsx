@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, Alert, Platform, ActivityIndicator } from 'react-native';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import { colors } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import Button from '../../components/Button';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { getStorageItem, setStorageItem, apiFetch } from '../../utils/api';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -13,19 +13,21 @@ const AccountScreen = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        async function loadUser() {
-            try {
-                const userStr = await getStorageItem('user');
-                if (userStr) {
-                    setUser(JSON.parse(userStr));
+    useFocusEffect(
+        useCallback(() => {
+            async function loadUser() {
+                try {
+                    const userStr = await getStorageItem('user');
+                    if (userStr) {
+                        setUser(JSON.parse(userStr));
+                    }
+                } catch (err) {
+                    console.error("Failed to load user info from storage:", err);
                 }
-            } catch (err) {
-                console.error("Failed to load user info from storage:", err);
             }
-        }
-        loadUser();
-    }, []);
+            loadUser();
+        }, [])
+    );
 
     const handlePickAndUploadAvatar = async () => {
         if (!user?.id) {

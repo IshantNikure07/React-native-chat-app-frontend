@@ -1,10 +1,10 @@
-import React, { useState , useEffect} from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import ChatItem from '../../components/ChatItem';
 import { colors } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { apiFetch } from '../../utils/api';
 
 // const DUMMY_CHATS = [
@@ -19,25 +19,27 @@ const DirectMessages = () => {
     const [conversations , setConversations] = useState([])
     const router = useRouter();
 
-    useEffect(() => {
-  async function fetchConversations() {
-    try {
-      const response = await apiFetch('/api/conversation');
-      const data = await response.json(); // ✅ IMPORTANT
+    useFocusEffect(
+        useCallback(() => {
+            async function fetchConversations() {
+                try {
+                    const response = await apiFetch('/api/conversation');
+                    const data = await response.json(); // ✅ IMPORTANT
 
-      console.log("API DATA:", data); // debug
+                    console.log("API DATA:", data); // debug
 
-      if (data.success && data.conversations) {
-        setConversations(data.conversations);
-      }
+                    if (data.success && data.conversations) {
+                        setConversations(data.conversations);
+                    }
 
-    } catch (error) {
-      console.error('Error fetching conversations:', error);
-    }
-  }
+                } catch (error) {
+                    console.error('Error fetching conversations:', error);
+                }
+            }
 
-  fetchConversations();
-}, []);
+            fetchConversations();
+        }, [])
+    );
 
     return (
         <ScreenWrapper>
@@ -69,7 +71,11 @@ const DirectMessages = () => {
                     showsVerticalScrollIndicator={false}
                 />
 
-                <TouchableOpacity className="rounded-full absolute bottom-5 right-5 items-center justify-center w-10 h-10" style={{ backgroundColor: colors.primary }}>
+                <TouchableOpacity 
+                    className="rounded-full absolute bottom-5 right-5 items-center justify-center w-10 h-10" 
+                    style={{ backgroundColor: colors.primary }}
+                    onPress={() => router.push('/users')}
+                >
                     <Ionicons name="add" size={24} color={colors.neutral900} />
                 </TouchableOpacity>
             </View>

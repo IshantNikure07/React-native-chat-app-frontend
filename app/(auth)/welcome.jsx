@@ -31,7 +31,7 @@ const Welcome = () => {
 
         <Button 
           title="Get Started" 
-          onPress={() => router.push('/register')} 
+          onPress={() => router.push('/login')} 
         />
 
       </View>

@@ -1,20 +1,66 @@
-import React from 'react';
+import React, { useState , useEffect} from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import ChatItem from '../../components/ChatItem';
 import { colors } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+import { Alert } from 'react-native';
+import { Platform } from 'react-native';
 
-const DUMMY_CHATS = [
-    { id: '1', name: 'John Doe', lastMessage: 'Hey, UI looks great!', time: '10:30 AM', unreadCount: 2, avatar: 'https://i.pravatar.cc/150?img=11' },
-    { id: '2', name: 'Jane Smith', lastMessage: 'Are we still meeting today?', time: '09:45 AM', unreadCount: 0, avatar: 'https://i.pravatar.cc/150?img=5' },
-    { id: '3', name: 'Michael Boss', lastMessage: 'Please send me the files.', time: 'Yesterday', unreadCount: 5, avatar: 'https://i.pravatar.cc/150?img=8' },
-    { id: '4', name: 'Sarah Connor', lastMessage: 'I will be back.', time: 'Yesterday', unreadCount: 0, avatar: null },
-];
+// const DUMMY_CHATS = [
+//     { id: '1', name: 'John Doe', lastMessage: 'Hey, UI looks great!', time: '10:30 AM', unreadCount: 2, avatar: 'https://i.pravatar.cc/150?img=11' },
+//     { id: '2', name: 'Jane Smith', lastMessage: 'Are we still meeting today?', time: '09:45 AM', unreadCount: 0, avatar: 'https://i.pravatar.cc/150?img=5' },
+//     { id: '3', name: 'Michael Boss', lastMessage: 'Please send me the files.', time: 'Yesterday', unreadCount: 5, avatar: 'https://i.pravatar.cc/150?img=8' },
+//     { id: '4', name: 'Sarah Connor', lastMessage: 'I will be back.', time: 'Yesterday', unreadCount: 0, avatar: null },
+// ];
+
 
 const DirectMessages = () => {
+    const [conversations , setConversations] = useState([])
     const router = useRouter();
+
+    useEffect(() => {
+  async function fetchConversations() {
+    try {
+      let token;
+
+      if (Platform.OS === 'web') {
+        token = localStorage.getItem('token');
+      } else {
+        token = await SecureStore.getItemAsync('token');
+      }
+
+      if(!token){
+        Alert.alert('No token found')
+        }
+
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/conversation`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          } 
+        }
+      );
+ 
+      const data = await response.json(); // ✅ IMPORTANT
+
+      console.log("API DATA:", data); // debug
+
+      if (data.success && data.conversations) {
+        setConversations(data.conversations);
+      }
+
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+    }
+  }
+
+  fetchConversations();
+}, []);
 
     return (
         <ScreenWrapper>
@@ -30,7 +76,7 @@ const DirectMessages = () => {
             
             <View className="flex-1 bg-white mt-4 rounded-t-3xl pt-2 overflow-hidden">
                 <FlatList 
-                    data={DUMMY_CHATS}
+                    data={conversations}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <ChatItem 
@@ -38,7 +84,7 @@ const DirectMessages = () => {
                             lastMessage={item.lastMessage}
                             time={item.time}
                             unreadCount={item.unreadCount}
-                            avatarUrl={item.avatar}
+                            avatarUrl={`${process.env.EXPO_PUBLIC_BACKEND_URL}${item.avatar}`}
                             onPress={() => router.push(`/chat/${item.id}`)}
                         />
                     )}

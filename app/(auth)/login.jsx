@@ -22,31 +22,43 @@ const Login = () => {
 
     const formik = useFormik({  
         initialValues: { email: '', password: '' },
-        validationSchema,
+        validationSchema, 
         onSubmit: async (values) => {
-            const res = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/auth/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(values)
-            })
-            const data = await res.json()
-            if (data?.success) {
-                if (Platform.OS === 'web') {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    localStorage.setItem('refreshToken', data.refreshToken);
-                } else {
-                    await SecureStore.setItemAsync('token', data.token);
-                    await SecureStore.setItemAsync('user', JSON.stringify(data.user));
-                    await SecureStore.setItemAsync('refreshToken', data.refreshToken);
+            try {
+                const res = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(values)
+                });
+                
+                const data = await res.json();
+                
+                if (data?.success === false || res.status >= 400) {
+                    Alert.alert('Login Failed', data?.message || 'Invalid Email or Password');
+                    return;
                 }
+                
+                if (data?.success === true) {
+                    if (Platform.OS === 'web') {
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        localStorage.setItem('refreshToken', data.refreshToken);
+                    } else {
+                        await SecureStore.setItemAsync('token', data.token);
+                        await SecureStore.setItemAsync('user', JSON.stringify(data.user));
+                        await SecureStore.setItemAsync('refreshToken', data.refreshToken);
+                    }
 
-                connectSocket(data.token) // Initialize socket with user auth token
-                router.replace('/(main)/direct')
-            } else {    
-                Alert.alert('Login Failed', data.message)
+                    connectSocket(data.token); // Initialize socket with user auth token
+                    router.replace('/(main)/direct');
+                } else {
+                    Alert.alert('Login Failed', data?.message || 'An unexpected error occurred');
+                }
+            } catch (error) {
+                console.error("Login Error:", error);
+                Alert.alert('Login Error', error?.message || 'Failed to connect to the server');
             }
         }
     })

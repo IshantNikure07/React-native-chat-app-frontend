@@ -1,23 +1,65 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Image, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/theme';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import { getSocket } from '../../utils/socket';
+import * as SecureStore from 'expo-secure-store';
 
-const DUMMY_MESSAGES = [
-    { id: '1', text: 'Hey there!', sender: 'other', time: '10:00 AM' },
-    { id: '2', text: 'Hi! How are you doing?', sender: 'me', time: '10:05 AM' },
-    { id: '3', text: 'I am doing great, just checking out this new app layout. It looks awesome!', sender: 'other', time: '10:08 AM' },
-];
+// const DUMMY_MESSAGES = [
+//     { id: '1', text: 'Hey there!', sender: 'other', time: '10:00 AM' },
+//     { id: '2', text: 'Hi! How are you doing?', sender: 'me', time: '10:05 AM' },
+//     { id: '3', text: 'I am doing great, just checking out this new app layout. It looks awesome!', sender: 'other', time: '10:08 AM' },
+// ];
 
 const ChatInterface = () => {
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const [message, setMessage] = useState('');
-    const [messages, setMessages] = useState(DUMMY_MESSAGES);
+    const [messages, setMessages] = useState([]);
     const isGroup = id.startsWith('g');
+
+    useEffect(() => {
+        async function fetchMessages() {
+            try {
+                let token;
+
+                if (Platform.OS === 'web') {
+                    token = localStorage.getItem('token');
+                } else {
+                    token = await SecureStore.getItemAsync('token');
+                }
+
+                if (!token) {
+                    console.log('No token found');
+                    return;
+                }
+
+                const response = await fetch(
+                    `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/messages/${id}`,
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    }
+                );
+
+                const data = await response.json();
+
+                if (data.success && data.messages) {
+                    setMessages(data.messages);
+                }
+            } catch (error) {
+                console.error('Error fetching messages:', error);
+            }
+        }
+
+        if (id) {
+            fetchMessages();
+        }
+    }, [id]);
 
     useEffect(() => {
         const socket = getSocket();
@@ -61,13 +103,13 @@ const ChatInterface = () => {
             };
 
             // Assuming optimistic local update for better UX
-            const localMessage = {
-                id: Date.now().toString() + "_temp",
-                text: message,
-                sender: 'me',
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-            setMessages(prev => [...prev, localMessage]);
+            // const localMessage = {
+            //     id: Date.now().toString() + "_temp",
+            //     text: message,
+            //     sender: 'me',
+            //     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            // };
+            // setMessages(prev => [...prev, localMessage]);
             setMessage('');
 
             if (socket) {

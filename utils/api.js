@@ -64,9 +64,14 @@ export async function apiFetch(endpoint, options = {}) {
 
     // Setup headers
     const headers = {
-        'Content-Type': 'application/json',
         ...options.headers,
     };
+
+    if (options.body && options.body instanceof FormData) {
+        // Let the environment set the appropriate multipart/form-data boundary
+    } else {
+        headers['Content-Type'] = 'application/json';
+    }
 
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;

@@ -1,13 +1,114 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, Platform, ActivityIndicator } from 'react-native';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import { colors } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import Button from '../../components/Button';
 import { useRouter } from 'expo-router';
+import { getStorageItem, setStorageItem, apiFetch } from '../../utils/api';
+import * as ImagePicker from 'expo-image-picker';
 
 const AccountScreen = () => {
     const router = useRouter();
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        async function loadUser() {
+            try {
+                const userStr = await getStorageItem('user');
+                if (userStr) {
+                    setUser(JSON.parse(userStr));
+                }
+            } catch (err) {
+                console.error("Failed to load user info from storage:", err);
+            }
+        }
+        loadUser();
+    }, []);
+
+    const handlePickAndUploadAvatar = async () => {
+        if (!user?.id) {
+            Alert.alert("Error", "User not logged in");
+            return;
+        }
+
+        try {
+            // Request media library permission
+            const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (!permissionResult.granted) {
+                Alert.alert("Permission Denied", "Permission to access photos is required to upload an avatar.");
+                return;
+            }
+
+            // Launch Image Library
+            const pickerResult = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+            });
+
+            if (pickerResult.canceled) {
+                return;
+            }
+
+            const asset = pickerResult.assets?.[0];
+            if (!asset || !asset.uri) {
+                return;
+            }
+
+            setLoading(true);
+
+            const formData = new FormData();
+            
+            if (Platform.OS === 'web') {
+                const response = await fetch(asset.uri);
+                const blob = await response.blob();
+                formData.append('avatar', blob, 'avatar.jpg');
+            } else {
+                formData.append('avatar', {
+                    uri: asset.uri,
+                    name: asset.fileName || 'avatar.jpg',
+                    type: asset.mimeType || 'image/jpeg',
+                });
+            }
+
+            const response = await apiFetch(`/api/users/${user.id}/upload-avatar`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'accept': '*/*',
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.user) {
+                // Update stored user details
+                const updatedUser = {
+                    ...user,
+                    avatar: data.user.avatar
+                };
+                await setStorageItem('user', JSON.stringify(updatedUser));
+                setUser(updatedUser);
+                Alert.alert("Uploaded successfully", "Profile picture uploaded successfully");
+            } else {
+                Alert.alert("Upload Failed", data.message || "Failed to upload avatar");
+            }
+        } catch (error) {
+            console.error("Avatar upload error:", error);
+            Alert.alert("Upload Error", error.message || "An error occurred during upload");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const username = user?.username || 'Loading...';
+    const email = user?.email || '';
+    const avatarUrl = user?.avatar 
+        ? (user.avatar.startsWith('http') ? user.avatar : `${process.env.EXPO_PUBLIC_BACKEND_URL}${user.avatar}`)
+        : 'https://i.pravatar.cc/300?img=11';
 
     return (
         <ScreenWrapper>
@@ -20,15 +121,24 @@ const AccountScreen = () => {
                     <View className="items-center py-10 bg-white border-b border-neutral-200">
                         <View className="relative">
                             <Image 
-                                source={{ uri: 'https://i.pravatar.cc/300?img=11' }} 
+                                source={{ uri: avatarUrl }} 
                                 className="w-28 h-28 rounded-full"
                             />
-                            <TouchableOpacity className="absolute bottom-0 right-0 bg-white p-2 rounded-full border border-neutral-200">
+                            {loading && (
+                                <View className="absolute inset-0 bg-black/40 rounded-full items-center justify-center">
+                                    <ActivityIndicator size="small" color={colors.primary} />
+                                </View>
+                            )}
+                            <TouchableOpacity 
+                                className="absolute bottom-0 right-0 bg-white p-2 rounded-full border border-neutral-200"
+                                onPress={handlePickAndUploadAvatar}
+                                disabled={loading}
+                            >
                                 <Ionicons name="camera" size={20} color={colors.primary} />
                             </TouchableOpacity>
                         </View>
-                        <Text className="text-2xl font-bold text-neutral-900 mt-4">John Doe</Text>
-                        <Text className="text-base text-neutral-500 mt-1">johndoe@example.com</Text>
+                        <Text className="text-2xl font-bold text-neutral-900 mt-4">{username}</Text>
+                        <Text className="text-base text-neutral-500 mt-1">{email}</Text>
                     </View>
 
                     <View className="mt-6 px-4 gap-4">

@@ -5,9 +5,7 @@ import ChatItem from '../../components/ChatItem';
 import { colors } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
-import { Alert } from 'react-native';
-import { Platform } from 'react-native';
+import { apiFetch } from '../../utils/api';
 
 // const DUMMY_CHATS = [
 //     { id: '1', name: 'John Doe', lastMessage: 'Hey, UI looks great!', time: '10:30 AM', unreadCount: 2, avatar: 'https://i.pravatar.cc/150?img=11' },
@@ -24,28 +22,7 @@ const DirectMessages = () => {
     useEffect(() => {
   async function fetchConversations() {
     try {
-      let token;
-
-      if (Platform.OS === 'web') {
-        token = localStorage.getItem('token');
-      } else {
-        token = await SecureStore.getItemAsync('token');
-      }
-
-      if(!token){
-        Alert.alert('No token found')
-        }
-
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/conversation`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          } 
-        }
-      );
- 
+      const response = await apiFetch('/api/conversation');
       const data = await response.json(); // ✅ IMPORTANT
 
       console.log("API DATA:", data); // debug

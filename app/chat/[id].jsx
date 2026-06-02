@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/theme';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import { getSocket } from '../../utils/socket';
-import * as SecureStore from 'expo-secure-store';
+import { apiFetch } from '../../utils/api';
 
 // const DUMMY_MESSAGES = [
 //     { id: '1', text: 'Hey there!', sender: 'other', time: '10:00 AM' },
@@ -23,29 +23,7 @@ const ChatInterface = () => {
     useEffect(() => {
         async function fetchMessages() {
             try {
-                let token;
-
-                if (Platform.OS === 'web') {
-                    token = localStorage.getItem('token');
-                } else {
-                    token = await SecureStore.getItemAsync('token');
-                }
-
-                if (!token) {
-                    console.log('No token found');
-                    return;
-                }
-
-                const response = await fetch(
-                    `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/messages/${id}`,
-                    {
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        }
-                    }
-                );
-
+                const response = await apiFetch(`/api/messages/${id}`);
                 const data = await response.json();
 
                 if (data.success && data.messages) {

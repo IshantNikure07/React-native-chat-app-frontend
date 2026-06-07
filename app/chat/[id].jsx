@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Image, Alert, ActivityIndicator, Keyboard } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/theme';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import { getSocket } from '../../utils/socket';
-import { apiFetch } from '../../utils/api';
+import { apiFetch, getStorageItem } from '../../utils/api';
 
 // const DUMMY_MESSAGES = [
 //     { id: '1', text: 'Hey there!', sender: 'other', time: '10:00 AM' },
@@ -33,7 +33,25 @@ const ChatInterface = () => {
     const [sender, setSender] = useState(null);
     const [onlineUsers, setOnlineUsers] = useState([]);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
+    const currentUserRef = useRef(null);
     const isGroup = id.startsWith('g');
+
+    useEffect(() => {
+        async function loadUser() {
+            try {
+                const userStr = await getStorageItem('user');
+                if (userStr) {
+                    const parsed = JSON.parse(userStr);
+                    setCurrentUser(parsed);
+                    currentUserRef.current = parsed;
+                }
+            } catch (error) {
+                console.error('Error loading user info:', error);
+            }
+        }
+        loadUser();
+    }, []);
 
     useEffect(() => {
         // Reset messages and sender state when chat ID changes to prevent showing old user data
@@ -82,12 +100,13 @@ const ChatInterface = () => {
             // Listen for incoming messages dynamically from backend
             socket.on("newMessage", (data) => {
                 // Determine if this is a message we should append
-                // If backend savedMessage contains senderId, we will adjust sender logically.
-                // Assuming `senderId` corresponds to you or 'other'. We'll fallback to checking if it's our own
+                const senderIdVal = data.sender_id || data.senderId;
+                const currentUserIdVal = currentUserRef.current?.id || socket.data?.userId;
+
                 const newIncoming = {
                     id: data.id || data._id || Date.now().toString(),
                     text: data.content,
-                    sender: data.senderId === socket.data?.userId ? 'me' : 'other',
+                    sender: (senderIdVal !== undefined && currentUserIdVal !== undefined && Number(senderIdVal) === Number(currentUserIdVal)) ? 'me' : 'other',
                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 };
                 setMessages(prev => [...prev, newIncoming]);
@@ -152,7 +171,7 @@ const ChatInterface = () => {
     const displayAvatar = isGroup 
         ? 'https://i.pravatar.cc/150?img=21' 
         : (avatar 
-            ? (avatar.startsWith('http') ? avatar : process.env.EXPO_PUBLIC_BACKEND_URL + avatar) 
+            ? (avatar.startsWith('http') ? "https://i.pinimg.com/736x/3c/67/75/3c67757cef723535a7484a6c7bfbfc43.jpg" : process.env.EXPO_PUBLIC_BACKEND_URL + avatar) 
             : (sender?.avatar 
                 ? (sender.avatar.startsWith('http') ? sender.avatar : process.env.EXPO_PUBLIC_BACKEND_URL + sender.avatar) 
                 : 'https://i.pinimg.com/736x/3c/67/75/3c67757cef723535a7484a6c7bfbfc43.jpg'));
@@ -227,7 +246,7 @@ const ChatInterface = () => {
                         
                         <View className="flex-1 flex-row items-center bg-neutral-100 rounded-full px-4 py-2">
                             <TextInput 
-                                className="flex-1 text-base text-neutral-900 pr-2 h-10"
+                                className="flex-1 text-base text-neutral-900 pr-2 h-12"
                                 placeholder="Message..."
                                 placeholderTextColor={colors.neutral500}
                                 value={message}

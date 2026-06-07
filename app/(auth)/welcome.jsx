@@ -12,7 +12,7 @@ const Welcome = () => {
     <ScreenWrapper showPattern={true} bgOpacity={0.7}>
       <View className="flex-1 justify-around items-center">
 
-        <Text className='text-5xl font-bold text-center ' style={{ color: colors.white }}>Chat App</Text>
+        <Text className='text-5xl font-bold text-center ' style={{ color: colors.white }}>Bubble AI</Text>
 
         <Animated.Image
           source={require("../../assets/images/welcome.png")}

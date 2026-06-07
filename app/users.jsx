@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import ScreenWrapper from '../components/ScreenWrapper';
 import ChatItem from '../components/ChatItem';
 import { colors } from '../constants/theme';
@@ -11,6 +11,7 @@ const UsersScreen = () => {
     const router = useRouter();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadingChatId, setLoadingChatId] = useState(null);
 
     useEffect(() => {
         async function fetchUsers() {
@@ -38,6 +39,37 @@ const UsersScreen = () => {
         fetchUsers();
     }, []);
 
+    const handleStartChat = async (receiverId) => {
+        if (loadingChatId) return;
+        setLoadingChatId(receiverId);
+        try {
+            const response = await apiFetch('/api/conversation', {
+                method: 'POST',
+                body: JSON.stringify({
+                    type: 'direct',
+                    receiverId: receiverId
+                })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                const conversationId = data.conversationId || data.conversation?.id || data.id;
+                if (conversationId) {
+                    router.push(`/chat/${conversationId}?receiverId=${receiverId}`);
+                } else {
+                    Alert.alert("Error", "Could not retrieve conversation ID");
+                }
+            } else {
+                Alert.alert("Error", data.message || "Failed to start conversation");
+            }
+        } catch (error) {
+            console.error('Error starting conversation:', error);
+            Alert.alert("Error", "An error occurred while starting the conversation");
+        } finally {
+            setLoadingChatId(null);
+        }
+    };
+
     return (
         <ScreenWrapper>
             {/* Header */}
@@ -48,7 +80,7 @@ const UsersScreen = () => {
                 <Text className="text-2xl font-bold text-white">Start a Chat</Text>
             </View>
             
-            <View className="flex-1 bg-white mt-4 rounded-t-3xl pt-2 overflow-hidden">
+            <View className="flex-1 bg-white mt-4 rounded-t-3xl pt-2 overflow-hidden relative">
                 {loading ? (
                     <View className="flex-1 justify-center items-center">
                         <ActivityIndicator size="large" color={colors.primary} />
@@ -70,12 +102,18 @@ const UsersScreen = () => {
                                 name={item.username}
                                 lastMessage={item.email}
                                 avatarUrl={item.avatar ? `${process.env.EXPO_PUBLIC_BACKEND_URL}${item.avatar}` : null}
-                                onPress={() => router.push(`/chat/${item.id}`)}
+                                onPress={() => handleStartChat(item.id)}
                             />
                         )}
                         contentContainerStyle={{ paddingVertical: 10 }}
                         showsVerticalScrollIndicator={false}
                     />
+                )}
+
+                {loadingChatId !== null && (
+                    <View className="absolute inset-0 bg-black/20 justify-center items-center z-50">
+                        <ActivityIndicator size="large" color={colors.primary} />
+                    </View>
                 )}
             </View>
         </ScreenWrapper>

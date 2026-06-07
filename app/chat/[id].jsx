@@ -26,7 +26,7 @@ const POPULAR_EMOJIS = [
 ];
 
 const ChatInterface = () => {
-    const { id } = useLocalSearchParams();
+    const { id, receiverId } = useLocalSearchParams();
     const router = useRouter();
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
@@ -111,7 +111,7 @@ const ChatInterface = () => {
             const socket = getSocket();
             const messageData = {
                 content: message,
-                receiverId: isGroup ? null : id, // For direct messages
+                receiverId: isGroup ? null : (receiverId ), // For direct messages
                 conversationId: id, // Assuming `id` acts as the active conversation/room pointer
                 isGroup: isGroup
             };
@@ -164,9 +164,9 @@ const ChatInterface = () => {
                         <Text className="text-lg font-bold text-white">{isGroup ? 'Group Chat' : (sender?.username ? sender?.username : 'Chat')}</Text>
                         <Text 
                             className="text-xs font-semibold"
-                            style={{ color: isGroup ? colors.neutral300 : (onlineUsers.includes(Number(id)) ? colors.green : colors.neutral400) }}
+                            style={{ color: isGroup ? colors.neutral300 : (onlineUsers.includes(Number(receiverId || sender?.id)) ? colors.green : colors.neutral400) }}
                         >
-                            {isGroup ? 'Group Chat' : (onlineUsers.includes(Number(id)) ? 'Online' : 'Offline')}
+                            {isGroup ? 'Group Chat' : (onlineUsers.includes(Number(receiverId || sender?.id)) ? 'Online' : 'Offline')}
                         </Text>
                     </View>
                     

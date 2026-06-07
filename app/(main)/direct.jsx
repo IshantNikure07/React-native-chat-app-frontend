@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import ChatItem from '../../components/ChatItem';
@@ -17,7 +17,16 @@ import { apiFetch } from '../../utils/api';
 
 const DirectMessages = () => {
     const [conversations , setConversations] = useState([])
+    const [showAiText , setShowAiText]= useState(true)
     const router = useRouter();
+
+  useEffect(() => {
+  const timer = setTimeout(() => {
+    setShowAiText(false);
+  }, 3000);
+
+  return () => clearTimeout(timer);
+}, []);
 
     useFocusEffect(
         useCallback(() => {
@@ -71,13 +80,39 @@ const DirectMessages = () => {
                     showsVerticalScrollIndicator={false}
                 />
 
+              <TouchableOpacity
+                className="absolute bottom-20 right-5 flex-row items-center justify-center rounded-2xl h-12 px-4"
+                style={{ backgroundColor: colors.primary }}
+                onPress={() => router.push('/chat/bubbleAI')}
+                >
+                {showAiText && (
+                    <Text
+                    style={{
+                        marginRight: 8,
+                        fontWeight: '600',
+                        color: colors.neutral900,
+                    }}
+                    >
+                    Bubble AI
+                    </Text>
+                )}
+
+                <Ionicons
+                    name="sparkles-outline"
+                    size={20}
+                    color={colors.neutral900}
+                />
+                </TouchableOpacity>
+
                 <TouchableOpacity 
-                    className="rounded-full absolute bottom-5 right-5 items-center justify-center w-10 h-10" 
+                    className="rounded-full absolute bottom-5 right-5 items-center justify-center w-12 h-12" 
                     style={{ backgroundColor: colors.primary }}
                     onPress={() => router.push('/users')}
                 >
                     <Ionicons name="add" size={24} color={colors.neutral900} />
                 </TouchableOpacity>
+
+               
             </View>
         </ScreenWrapper>
     );

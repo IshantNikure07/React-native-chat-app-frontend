@@ -39,7 +39,7 @@ const UsersScreen = () => {
         fetchUsers();
     }, []);
 
-    const handleStartChat = async (receiverId) => {
+    const handleStartChat = async (receiverId, username, avatar) => {
         if (loadingChatId) return;
         setLoadingChatId(receiverId);
         try {
@@ -55,7 +55,8 @@ const UsersScreen = () => {
             if (data.success) {
                 const conversationId = data.conversationId || data.conversation?.id || data.id;
                 if (conversationId) {
-                    router.push(`/chat/${conversationId}?receiverId=${receiverId}`);
+                    const avatarParam = avatar ? `&avatar=${encodeURIComponent(avatar)}` : '';
+                    router.push(`/chat/${conversationId}?receiverId=${receiverId}&username=${encodeURIComponent(username)}${avatarParam}`);
                 } else {
                     Alert.alert("Error", "Could not retrieve conversation ID");
                 }
@@ -102,7 +103,7 @@ const UsersScreen = () => {
                                 name={item.username}
                                 lastMessage={item.email}
                                 avatarUrl={item.avatar ? `${process.env.EXPO_PUBLIC_BACKEND_URL}${item.avatar}` : null}
-                                onPress={() => handleStartChat(item.id)}
+                                onPress={() => handleStartChat(item.id, item.username, item.avatar)}
                             />
                         )}
                         contentContainerStyle={{ paddingVertical: 10 }}

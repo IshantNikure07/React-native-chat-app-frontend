@@ -26,14 +26,20 @@ const POPULAR_EMOJIS = [
 ];
 
 const ChatInterface = () => {
-    const { id, receiverId } = useLocalSearchParams();
+    const { id, receiverId, username, avatar } = useLocalSearchParams();
     const router = useRouter();
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
-    const [sender, setSender] = useState([]);
+    const [sender, setSender] = useState(null);
     const [onlineUsers, setOnlineUsers] = useState([]);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const isGroup = id.startsWith('g');
+
+    useEffect(() => {
+        // Reset messages and sender state when chat ID changes to prevent showing old user data
+        setMessages([]);
+        setSender(null);
+    }, [id, receiverId]);
 
     const toggleEmojiPicker = () => {
         if (!showEmojiPicker) {
@@ -143,6 +149,16 @@ const ChatInterface = () => {
         }
     };
 
+    const displayAvatar = isGroup 
+        ? 'https://i.pravatar.cc/150?img=21' 
+        : (avatar 
+            ? (avatar.startsWith('http') ? avatar : process.env.EXPO_PUBLIC_BACKEND_URL + avatar) 
+            : (sender?.avatar 
+                ? (sender.avatar.startsWith('http') ? sender.avatar : process.env.EXPO_PUBLIC_BACKEND_URL + sender.avatar) 
+                : 'https://i.pinimg.com/736x/3c/67/75/3c67757cef723535a7484a6c7bfbfc43.jpg'));
+
+    const displayUsername = isGroup ? 'Group Chat' : (username || sender?.username || 'Chat');
+
     return (
         <KeyboardAvoidingView 
             className="flex-1" 
@@ -156,12 +172,12 @@ const ChatInterface = () => {
                     </TouchableOpacity>
                     
                     <Image 
-                        source={{ uri: isGroup ? 'https://i.pravatar.cc/150?img=21' :  (sender?.avatar ? process.env.EXPO_PUBLIC_BACKEND_URL+sender?.avatar : 'https://i.pravatar.cc/150?img=11') }} 
+                        source={{ uri: displayAvatar }} 
                         className="w-10 h-10 rounded-full mr-3"
                     />
                     
                     <View className="flex-1">
-                        <Text className="text-lg font-bold text-white">{isGroup ? 'Group Chat' : (sender?.username ? sender?.username : 'Chat')}</Text>
+                        <Text className="text-lg font-bold text-white">{displayUsername}</Text>
                         <Text 
                             className="text-xs font-semibold"
                             style={{ color: isGroup ? colors.neutral300 : (onlineUsers.includes(Number(receiverId || sender?.id)) ? colors.green : colors.neutral400) }}

@@ -110,7 +110,7 @@ const AccountScreen = () => {
     const email = user?.email || '';
     const avatarUrl = user?.avatar 
         ? (user.avatar.startsWith('http') ? user.avatar : `${process.env.EXPO_PUBLIC_BACKEND_URL}${user.avatar}`)
-        : 'https://i.pravatar.cc/300?img=11';
+        : 'https://i.pinimg.com/736x/3c/67/75/3c67757cef723535a7484a6c7bfbfc43.jpg';
 
     return (
         <ScreenWrapper>

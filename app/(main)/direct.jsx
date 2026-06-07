@@ -6,6 +6,7 @@ import { colors } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { apiFetch } from '../../utils/api';
+import { getSocket } from '../../utils/socket';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -32,6 +33,62 @@ const DirectMessages = () => {
 
   return () => clearTimeout(timer);
 }, []);
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    if (socket) {
+        socket.on("newMessage", (data) => {
+            const messageConvId = data.conversation_id || data.conversationId;
+            
+            setConversations(prev => {
+                const exists = prev.some(c => Number(c.id) === Number(messageConvId));
+                
+                if (exists) {
+                    const updated = prev.map(c => {
+                        if (Number(c.id) === Number(messageConvId)) {
+                            return {
+                                ...c,
+                                lastMessage: data.content,
+                                time: new Date(data.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                unreadCount: (c.unreadCount || 0) + 1
+                            };
+                        }
+                        return c;
+                    });
+                    
+                    // Sort the conversations so the newly updated one is at the top
+                    return [...updated].sort((a, b) => {
+                        if (Number(a.id) === Number(messageConvId)) return -1;
+                        if (Number(b.id) === Number(messageConvId)) return 1;
+                        return 0;
+                    });
+                } else {
+                    // Refetch list since it's a new conversation
+                    async function refreshConversations() {
+                        try {
+                            const response = await apiFetch('/api/conversation');
+                            const resData = await response.json();
+                            if (resData.success && resData.conversations) {
+                                setConversations(resData.conversations);
+                            }
+                        } catch (error) {
+                            console.error('Error refreshing conversations:', error);
+                        }
+                    }
+                    refreshConversations();
+                    return prev;
+                }
+            });
+        });
+    }
+
+    return () => {
+        if (socket) {
+            socket.off("newMessage");
+        }
+    };
+  }, []);
 
     useFocusEffect(
         useCallback(() => {
@@ -77,7 +134,7 @@ const DirectMessages = () => {
                             lastMessage={item.lastMessage}
                             time={item.time}
                             unreadCount={item.unreadCount}
-                            avatarUrl={`${process.env.EXPO_PUBLIC_BACKEND_URL}${item.avatar}`}
+                            avatarUrl={ item.avatar.startsWith('/') ? `${process.env.EXPO_PUBLIC_BACKEND_URL}${item.avatar}` : 'https://i.pinimg.com/736x/3c/67/75/3c67757cef723535a7484a6c7bfbfc43.jpg'}
                             onPress={() => {
                                 const avatarParam = item.avatar ? `&avatar=${encodeURIComponent(item.avatar)}` : '';
                                 const receiverParam = (item.participantId || item.userId || item.receiverId) ? `&receiverId=${item.participantId || item.userId || item.receiverId}` : '';

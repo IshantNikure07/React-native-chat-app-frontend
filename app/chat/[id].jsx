@@ -35,6 +35,7 @@ const ChatInterface = () => {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const currentUserRef = useRef(null);
+    const flatListRef = useRef(null);
     const isGroup = id.startsWith('g');
 
     useEffect(() => {
@@ -216,10 +217,13 @@ const ChatInterface = () => {
                 {/* Chat Area */}
                 <View className="flex-1 bg-neutral-50 rounded-t-3xl overflow-hidden pt-4">
                     <FlatList
+                        ref={flatListRef}
                         data={messages}
                         keyExtractor={(item, index) => item.id || index.toString()}
                         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
                         showsVerticalScrollIndicator={false}
+                        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                        onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
                         renderItem={({ item }) => {
                             const isMe = item.sender === 'me';
                             return (

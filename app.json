@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "chat-app-frontend",
-    "slug": "chat-app-frontend",
+    "name": "Bubble Ai",
+    "slug": "bubble-ai",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/Bubblelogo.png",
     "scheme": "chatappfrontend",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.bubbleai"
     },
     "web": {
       "output": "static",

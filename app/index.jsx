@@ -24,10 +24,10 @@ const SplashScreen = () => {
         backgroundColor={colors.neutral900}
       />
       <Animated.Image 
-      source={{uri:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBluDJpms3WLcIaV5NhB6ZYUbOmNd7USqdaQ&s"}}
+      source={require('../assets/images/splashLogo.png')}
       style={{
-        width: 200,
-        height: 200,
+        width: 300,
+        height: 300,
       }}
       entering={FadeIn.delay(500).duration(1000)}
       />

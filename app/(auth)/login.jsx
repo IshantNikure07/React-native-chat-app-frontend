@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Ionicons } from '@expo/vector-icons'
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View, TouchableOpacity, Alert } from 'react-native'
 import BackButton from '../../components/BackButton'
@@ -19,6 +19,7 @@ const validationSchema = Yup.object().shape({
 
 const Login = () => {
     const router = useRouter()
+    const [showPassword, setShowPassword] = useState(false)
 
     const formik = useFormik({  
         initialValues: { email: '', password: '' },
@@ -97,10 +98,15 @@ const Login = () => {
                                         <Input
                                             icon={<Ionicons name="lock-closed" size={20} color={colors.neutral700} />}
                                             placeholder="Enter your password"
-                                            secureTextEntry
+                                            secureTextEntry={!showPassword}
                                             onChangeText={formik.handleChange('password')}
                                             onBlur={formik.handleBlur('password')}
                                             value={formik.values.password}
+                                            rightIcon={
+                                                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                                    <Ionicons name={showPassword ? "eye" : "eye-off"} size={20} color={colors.neutral700} />
+                                                </TouchableOpacity>
+                                            }
                                         />
                                         {formik.touched.password && formik.errors.password && <Text className="text-red-500 text-sm mt-1 ml-2">{formik.errors.password}</Text>}
                                     </View>

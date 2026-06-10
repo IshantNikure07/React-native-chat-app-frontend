@@ -2,7 +2,7 @@ import { TextInput, View, Platform } from 'react-native'
 import React, { useState } from 'react'
 import { colors } from '../constants/theme'
 
-const Input = ({ icon, ...props }) => {
+const Input = ({ icon, rightIcon, ...props }) => {
   const [isFocused, setIsFocused] = useState(false)
 
   return (
@@ -19,6 +19,7 @@ const Input = ({ icon, ...props }) => {
         {...props}
         style={[props.style, Platform.OS === 'web' && { outlineStyle: 'none' }]}
       />
+      {rightIcon && rightIcon}
     </View>
   )
 }

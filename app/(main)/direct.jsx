@@ -134,8 +134,13 @@ const DirectMessages = () => {
                             lastMessage={item.lastMessage}
                             time={item.time}
                             unreadCount={item.unreadCount}
-                            avatarUrl={ item.avatar.startsWith('/') ? `${process.env.EXPO_PUBLIC_BACKEND_URL}${item.avatar}` : 'https://i.pinimg.com/736x/3c/67/75/3c67757cef723535a7484a6c7bfbfc43.jpg'}
-                            onPress={() => {
+ avatarUrl={
+                            item.avatar
+      ? item.avatar.startsWith('http')
+        ? item.avatar
+        : `${process.env.EXPO_PUBLIC_BACKEND_URL}${item.avatar}`
+      : 'https://i.pinimg.com/736x/3c/67/75/3c67757cef723535a7484a6c7bfbfc43.jpg'
+  }                            onPress={() => {
                                 const avatarParam = item.avatar ? `&avatar=${encodeURIComponent(item.avatar)}` : '';
                                 const receiverParam = (item.participantId || item.userId || item.receiverId) ? `&receiverId=${item.participantId || item.userId || item.receiverId}` : '';
                                 router.push(`/chat/${item.id}?username=${encodeURIComponent(item.name || '')}${avatarParam}${receiverParam}`);

@@ -250,7 +250,7 @@ const ChatInterface = () => {
                         
                         <View className="flex-1 flex-row items-center bg-neutral-100 rounded-full px-4 py-2">
                             <TextInput 
-                                className="flex-1 text-base text-neutral-900 pr-2 h-12"
+                                className="flex-1 text-base text-neutral-900 pr-2 h-12 pt-1"
                                 placeholder="Message..."
                                 placeholderTextColor={colors.neutral500}
                                 value={message}

@@ -182,7 +182,7 @@ const ChatInterface = () => {
     return (
         <KeyboardAvoidingView 
             className="flex-1" 
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'android' ? 'padding' : 'height'}
         >
             <ScreenWrapper>
                 {/* Header */}
@@ -249,15 +249,31 @@ const ChatInterface = () => {
                         </TouchableOpacity>
                         
                         <View className="flex-1 flex-row items-center bg-neutral-100 rounded-full px-4 py-2">
-                            <TextInput 
-                                className="flex-1 text-base text-neutral-900 pr-2 h-12 pt-1"
+                            {/* <TextInput 
+                                className="flex-1 text-base text-neutral-900 pr-2 h-16 pt-1"
                                 placeholder="Message..."
                                 placeholderTextColor={colors.neutral500}
                                 value={message}
                                 onChangeText={setMessage}
                                 onFocus={() => setShowEmojiPicker(false)}
                                 multiline
-                            />
+                            /> */}
+
+                            <TextInput
+                                className="flex-1 text-base text-neutral-900 pr-2"
+                                style={{
+                                    minHeight: 50,
+                                    maxHeight: 50,
+                                    textAlignVertical: 'top',
+                                }}
+                                placeholder="Message..."
+                                placeholderTextColor={colors.neutral500}
+                                value={message}
+                                onChangeText={setMessage}
+                                onFocus={() => setShowEmojiPicker(false)}
+                                multiline
+                                scrollEnabled={true}
+                                />
                             <TouchableOpacity onPress={toggleEmojiPicker}>
                                 <Ionicons 
                                     name={showEmojiPicker ? "keyboard-outline" : "happy-outline"} 

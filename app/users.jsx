@@ -102,7 +102,14 @@ const UsersScreen = () => {
                             <ChatItem 
                                 name={item.username}
                                 lastMessage={item.email}
-                                avatarUrl={item.avatar ? `${process.env.EXPO_PUBLIC_BACKEND_URL}${item.avatar}` : null}
+                                // avatarUrl={item.avatar ? `${process.env.EXPO_PUBLIC_BACKEND_URL}${item.avatar}` : null}
+                                 avatarUrl={
+                            item.avatar
+      ? item.avatar.startsWith('http')
+        ? item.avatar
+        : `${process.env.EXPO_PUBLIC_BACKEND_URL}${item.avatar}`
+      : 'https://i.pinimg.com/736x/3c/67/75/3c67757cef723535a7484a6c7bfbfc43.jpg'
+  } 
                                 onPress={() => handleStartChat(item.id, item.username, item.avatar)}
                             />
                         )}
